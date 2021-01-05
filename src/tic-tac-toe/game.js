@@ -1,7 +1,7 @@
 import { Observable, merge } from 'rxjs';
-import { computerMove$ } from './computerMove';
+import { computerMove$, simulateComputerTurn } from './computerMove';
 import { userMove$ } from './userMove'
-import {  scan, startWith } from 'rxjs/operators'
+import {  scan, startWith, tap, takeWhile } from 'rxjs/operators'
 
 //pure function to find out empty cells
 export const getEmptyCells = (board) =>{
@@ -69,5 +69,11 @@ const initialGame = {
 //main observable with the game logic. Right now only emiting the board
 export const game$ = merge(userMove$,computerMove$).pipe(
     startWith(null),
-    scan(updateGameState, initialGame)
+    scan(updateGameState, initialGame),
+    tap((state)=>{
+        if(state.nextPlayer == 2 && !state.finished){
+            simulateComputerTurn(getEmptyCells(state.board))
+        }
+    }),
+    takeWhile(({finished})=> finished == false, true)
 );
